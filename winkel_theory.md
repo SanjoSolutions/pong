@@ -20,8 +20,8 @@ Ausfallswinkel: 0.75PI radian
 
 ### Abpralllinie "horizontal", above
 
-Abpralllinie: horizontal
-Einfallswinkel: 0.25PI radian
+Abpralllinie: horizontal<br>
+Einfallswinkel: 0.25PI radian<br>
 Ausfallswinkel: 1.75PI radian
 
 Ausfallswinkel = 1.5PI + (1.5PI - Einfallswinkel)
