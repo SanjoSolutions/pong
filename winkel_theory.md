@@ -8,10 +8,6 @@ Zu berechnen: Ausfallswinkel in radian
 |
 ---> 0 radian
 
-Abpralllinie: horizontal
-Einfallswinkel: 0.25PI radian
-Ausfallswinkel: 1.75PI radian
-
 Abpralllinie: vertical
 Einfallswinkel: 0 radian
 Ausfallswinkel: 0 radian
@@ -23,6 +19,10 @@ Ausfallswinkel: 0.75PI radian
 ## Cases
 
 ### Abpralllinie "horizontal", above
+
+Abpralllinie: horizontal
+Einfallswinkel: 0.25PI radian
+Ausfallswinkel: 1.75PI radian
 
 Ausfallswinkel = 1.5PI + (1.5PI - Einfallswinkel)
 
