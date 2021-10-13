@@ -18,7 +18,7 @@ class Bar extends Entity {
 class Ball extends Entity {
   static WIDTH = 16
   static HEIGHT = 16
-  static MOVE_STEP = 0.5
+  static MOVE_STEP = 1
 
   constructor(position, angle) {
     super(position, { width: Ball.WIDTH, height: Ball.HEIGHT })
