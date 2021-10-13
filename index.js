@@ -61,6 +61,13 @@ function main() {
       ])
     ],
     [
+      'Xbox 360 Controller (XInput STANDARD GAMEPAD)',
+      new Map([
+        [Keys.Up, gamepad => gamepad.buttons[12].pressed],
+        [Keys.Down, gamepad => gamepad.buttons[13].pressed]
+      ])
+    ],
+    [
       'Fighting Stick mini 4 (Vendor: 0f0d Product: 0088)',
       new Map([
         [Keys.Up, gamepad => gamepad.axes[9] === -1],
