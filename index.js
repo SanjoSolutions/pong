@@ -231,11 +231,20 @@ function main() {
       } else {
         ball.angle = 1.5 * Math.PI - (ball.angle - 1.5 * Math.PI)
       }
-    } else if (ball.position.y - ball.radius < 0) {
-      ball.angle = 0.5 * Math.PI + (ball.angle - Math.PI)
-    } else if (ball.position.y + ball.radius > canvas.height - 1) {
-      ball.angle = 1.5 * Math.PI + ball.angle
     }
+
+    if (
+      (ball.position.y - ball.radius < 0) ||
+      (ball.position.y + ball.radius > canvas.height - 1)
+    ) {
+      ball.angle = 2 * Math.PI - ball.angle
+    }
+
+    ball.angle %= 2 * Math.PI
+    if (ball.angle < 0) {
+      ball.angle += 2 * Math.PI
+    }
+    console.log(360 * ball.angle / (2 * Math.PI) + '°')
   }
 
   function isBallIntersectingBar0(ball) {
