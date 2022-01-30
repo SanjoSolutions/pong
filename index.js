@@ -244,7 +244,6 @@ function main() {
     if (ball.angle < 0) {
       ball.angle += 2 * Math.PI
     }
-    console.log(360 * ball.angle / (2 * Math.PI) + '°')
   }
 
   function isBallIntersectingBar0(ball) {
