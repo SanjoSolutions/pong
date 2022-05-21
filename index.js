@@ -52,20 +52,23 @@ function main() {
     Down: 2
   }
 
+  const xbox360ControllerKeyMap = new Map([
+    [Keys.Up, gamepad => gamepad.buttons[12].pressed],
+    [Keys.Down, gamepad => gamepad.buttons[13].pressed]
+  ])
+
   const keyMappings = new Map([
     [
       'Xbox 360 Wired Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)',
-      new Map([
-        [Keys.Up, gamepad => gamepad.buttons[12].pressed],
-        [Keys.Down, gamepad => gamepad.buttons[13].pressed]
-      ])
+      xbox360ControllerKeyMap
     ],
     [
       'Xbox 360 Controller (XInput STANDARD GAMEPAD)',
-      new Map([
-        [Keys.Up, gamepad => gamepad.buttons[12].pressed],
-        [Keys.Down, gamepad => gamepad.buttons[13].pressed]
-      ])
+      xbox360ControllerKeyMap
+    ],
+    [
+      '©Microsoft Corporation Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)',
+      xbox360ControllerKeyMap
     ],
     [
       'Fighting Stick mini 4 (Vendor: 0f0d Product: 0088)',
@@ -76,14 +79,71 @@ function main() {
     ]
   ])
 
-  let gamepadIndexes = [null, null]
+  class Controller {
+    isKeyDown(key) {
+      throw new Error('Unimplemented')
+    }
+  }
+
+  class GamepadController extends Controller {
+    constructor(gamepadIndex) {
+      super()
+
+      this.gamepadIndex = gamepadIndex
+    }
+
+    isKeyDown(key) {
+      const gamepad = navigator.getGamepads()[this.gamepadIndex]
+      const keyMapping = keyMappings.get(gamepad.id)
+      return keyMapping.get(key)(gamepad)
+    }
+  }
+
+  const keyCodeToKey = new Map([
+    ['ArrowUp', Keys.Up],
+    ['ArrowDown', Keys.Down]
+  ])
+
+  class KeyboardController extends Controller {
+    constructor(initialKeyStates) {
+      super()
+
+      this.keyStates = initialKeyStates
+
+      window.addEventListener('keydown', (event) => {
+        this._updateKeyState(event, true)
+      })
+
+      window.addEventListener('keyup', (event) => {
+        this._updateKeyState(event, false)
+      })
+    }
+
+    isKeyDown(key) {
+      return this.keyStates.get(key)
+    }
+
+    _updateKeyState(event, value) {
+      const keyCode = event.code
+      this._setKeyState(keyCode, value)
+    }
+
+    _setKeyState(keyCode, value) {
+      if (keyCodeToKey.has(keyCode)) {
+        const key = keyCodeToKey.get(keyCode)
+        this.keyStates.set(key, value)
+      }
+    }
+  }
+
+  const controllers = [null, null]
 
   window.addEventListener('gamepadconnected', function (event) {
     const gamepad = event.gamepad
     if (keyMappings.has(gamepad.id)) {
-      const index = gamepadIndexes.indexOf(null)
+      const index = controllers.indexOf(null)
       if (index !== -1) {
-        gamepadIndexes[index] = gamepad.index
+        controllers[index] = new GamepadController(gamepad.index)
       }
     } else {
       console.error(`Key mapping for Gamepad "${gamepad.id}" missing.`)
@@ -91,9 +151,22 @@ function main() {
   })
 
   window.addEventListener('gamepaddisconnected', function (event) {
-    for (let index = 0; index < gamepadIndexes.length; index++) {
-      if (gamepadIndexes[index] === event.gamepad.index) {
-        gamepadIndexes[index] = null
+    for (let index = 0; index < controllers.length; index++) {
+      if (controllers[index].gamepadIndex === event.gamepad.index) {
+        controllers[index] = null
+      }
+    }
+  })
+
+  window.addEventListener('keydown', function listenForKeyPress(event) {
+    const keyCode = event.code
+    if (keyCodeToKey.has(keyCode)) {
+      const index = controllers.indexOf(null)
+      if (index !== -1) {
+        const initialKeyState = new Map(Object.values(Keys).map(key => [key, false]))
+        initialKeyState.set(keyCodeToKey.get(keyCode), true)
+        controllers[index] = new KeyboardController(initialKeyState)
+        window.removeEventListener('keydown', listenForKeyPress)
       }
     }
   })
@@ -156,13 +229,12 @@ function main() {
   }
 
   function moveBar0(bar) {
-    const gamepadIndex = gamepadIndexes[0]
-    moveBarManually(bar, ball, gamepadIndex)
+    moveBarManually(bar, ball, controllers[0])
   }
 
   function moveBar1(bar, ball) {
-    const gamepadIndex = gamepadIndexes[1]
-    if (gamepadIndex !== null) {
+    const controller = controllers[1]
+    if (controller !== null) {
       moveBar1Manually(bar, ball)
     } else {
       moveBar1Automatically(bar, ball)
@@ -170,20 +242,16 @@ function main() {
   }
 
   function moveBar1Manually(bar, ball) {
-    const gamepadIndex = gamepadIndexes[1]
-    moveBarManually(bar, ball, gamepadIndex)
+    moveBarManually(bar, ball, controllers[1])
   }
 
-  function moveBarManually(bar, ball, gamepadIndex) {
-    if (gamepadIndex !== null) {
-      const gamepad = navigator.getGamepads()[gamepadIndex]
+  function moveBarManually(bar, ball, controller) {
+    if (controller !== null) {
       const newBarPosition = { ...bar.position }
-      const buttons = gamepad.buttons
-      const keyMapping = keyMappings.get(gamepad.id)
-      if (keyMapping.get(Keys.Down)(gamepad)) {
+      if (controller.isKeyDown(Keys.Down)) {
         newBarPosition.y += Bar.STEP_SIZE
       }
-      if (keyMapping.get(Keys.Up)(gamepad)) {
+      if (controller.isKeyDown(Keys.Up)) {
         newBarPosition.y -= Bar.STEP_SIZE
       }
       newBarPosition.y = Math.min(
