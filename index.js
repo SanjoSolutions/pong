@@ -31,57 +31,57 @@ class Ball extends Entity {
 }
 
 function main() {
-  const canvas = document.createElement('canvas')
-  canvas.width = 640
-  canvas.height = 480
+  const canvas = document.createElement("canvas")
+  canvas.width = Math.min(640, window.innerWidth)
+  canvas.height = Math.min(480, window.innerHeight)
   document.body.appendChild(canvas)
-  const context = canvas.getContext('2d')
+  const context = canvas.getContext("2d")
 
   const bars = [
     new Bar({ x: 0, y: 0 }),
-    new Bar({ x: canvas.width - Bar.WIDTH, y: 0 })
+    new Bar({ x: canvas.width - Bar.WIDTH, y: 0 }),
   ]
   const initialBallPosition = { x: 0.5 * canvas.width, y: 0.5 * canvas.height }
   const ball = new Ball(
     { ...initialBallPosition },
-    0.25 * Math.PI
+    0.25 * Math.PI,
   )
 
   const Keys = {
     Up: 1,
-    Down: 2
+    Down: 2,
   }
 
   const xbox360ControllerKeyMap = new Map([
     [Keys.Up, gamepad => gamepad.buttons[12].pressed],
-    [Keys.Down, gamepad => gamepad.buttons[13].pressed]
+    [Keys.Down, gamepad => gamepad.buttons[13].pressed],
   ])
 
   const keyMappings = new Map([
     [
-      'Xbox 360 Wired Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)',
-      xbox360ControllerKeyMap
+      "Xbox 360 Wired Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)",
+      xbox360ControllerKeyMap,
     ],
     [
-      'Xbox 360 Controller (XInput STANDARD GAMEPAD)',
-      xbox360ControllerKeyMap
+      "Xbox 360 Controller (XInput STANDARD GAMEPAD)",
+      xbox360ControllerKeyMap,
     ],
     [
-      '©Microsoft Corporation Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)',
-      xbox360ControllerKeyMap
+      "©Microsoft Corporation Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)",
+      xbox360ControllerKeyMap,
     ],
     [
-      'Fighting Stick mini 4 (Vendor: 0f0d Product: 0088)',
+      "Fighting Stick mini 4 (Vendor: 0f0d Product: 0088)",
       new Map([
         [Keys.Up, gamepad => gamepad.axes[9] === -1],
-        [Keys.Down, gamepad => gamepad.axes[9] === 0.14285719394683838]
-      ])
-    ]
+        [Keys.Down, gamepad => gamepad.axes[9] === 0.14285719394683838],
+      ]),
+    ],
   ])
 
   class Controller {
     isKeyDown(key) {
-      throw new Error('Unimplemented')
+      throw new Error("Unimplemented")
     }
   }
 
@@ -100,8 +100,8 @@ function main() {
   }
 
   const keyCodeToKey = new Map([
-    ['ArrowUp', Keys.Up],
-    ['ArrowDown', Keys.Down]
+    ["ArrowUp", Keys.Up],
+    ["ArrowDown", Keys.Down],
   ])
 
   class KeyboardController extends Controller {
@@ -110,11 +110,11 @@ function main() {
 
       this.keyStates = initialKeyStates
 
-      window.addEventListener('keydown', (event) => {
+      window.addEventListener("keydown", (event) => {
         this._updateKeyState(event, true)
       })
 
-      window.addEventListener('keyup', (event) => {
+      window.addEventListener("keyup", (event) => {
         this._updateKeyState(event, false)
       })
     }
@@ -136,9 +136,37 @@ function main() {
     }
   }
 
-  const controllers = [null, null]
+  class PointerController extends Controller {
+    isPointerDown = false
+    targetY = null
 
-  window.addEventListener('gamepadconnected', function (event) {
+    constructor() {
+      super()
+
+      window.addEventListener("pointerdown", (event) => {
+        event.preventDefault()
+        this.isPointerDown = true
+      })
+
+      window.addEventListener("pointermove", (event) => {
+        event.preventDefault()
+        if (this.isPointerDown) {
+          this.targetY = event.offsetY - 0.5 * Bar.HEIGHT
+        }
+      })
+
+      window.addEventListener("pointerup", (event) => {
+        event.preventDefault()
+        this.isPointerDown = false
+        this.targetY = null
+      })
+    }
+  }
+
+  const controllers = [null, null]
+  const pointerController = new PointerController()
+
+  window.addEventListener("gamepadconnected", function (event) {
     const gamepad = event.gamepad
     if (keyMappings.has(gamepad.id)) {
       const index = controllers.indexOf(null)
@@ -146,11 +174,11 @@ function main() {
         controllers[index] = new GamepadController(gamepad.index)
       }
     } else {
-      console.error(`Key mapping for Gamepad "${gamepad.id}" missing.`)
+      console.error(`Key mapping for Gamepad "${ gamepad.id }" missing.`)
     }
   })
 
-  window.addEventListener('gamepaddisconnected', function (event) {
+  window.addEventListener("gamepaddisconnected", function (event) {
     for (let index = 0; index < controllers.length; index++) {
       if (controllers[index].gamepadIndex === event.gamepad.index) {
         controllers[index] = null
@@ -158,15 +186,16 @@ function main() {
     }
   })
 
-  window.addEventListener('keydown', function listenForKeyPress(event) {
+  window.addEventListener("keydown", function listenForKeyPress(event) {
     const keyCode = event.code
     if (keyCodeToKey.has(keyCode)) {
       const index = controllers.indexOf(null)
       if (index !== -1) {
-        const initialKeyState = new Map(Object.values(Keys).map(key => [key, false]))
+        const initialKeyState = new Map(Object.values(Keys)
+          .map(key => [key, false]))
         initialKeyState.set(keyCodeToKey.get(keyCode), true)
         controllers[index] = new KeyboardController(initialKeyState)
-        window.removeEventListener('keydown', listenForKeyPress)
+        window.removeEventListener("keydown", listenForKeyPress)
       }
     }
   })
@@ -178,7 +207,7 @@ function main() {
   }
 
   function renderBackground() {
-    context.fillStyle = 'black'
+    context.fillStyle = "black"
     context.fillRect(0, 0, canvas.width, canvas.height)
   }
 
@@ -187,24 +216,24 @@ function main() {
   }
 
   function renderBar(bar) {
-    context.fillStyle = 'white'
+    context.fillStyle = "white"
     context.fillRect(
       bar.position.x,
       bar.position.y,
       bar.size.width,
-      bar.size.height
+      bar.size.height,
     )
   }
 
   function renderBall(ball) {
-    context.strokeStyle = 'white'
+    context.strokeStyle = "white"
     context.beginPath()
     context.arc(
       ball.position.x,
       ball.position.y,
       ball.radius,
       0,
-      2 * Math.PI
+      2 * Math.PI,
     )
     context.fill()
   }
@@ -229,7 +258,21 @@ function main() {
   }
 
   function moveBar0(bar) {
-    moveBarManually(bar, ball, controllers[0])
+    if (pointerController.isPointerDown && pointerController.targetY !== null) {
+      if (pointerController.targetY - bar.position.y <= -Bar.STEP_SIZE) {
+        const bar = bars[0]
+        const newBarPosition = { ...bar.position }
+        newBarPosition.y -= Bar.STEP_SIZE
+        bar.position = newBarPosition
+      } else if (pointerController.targetY - bar.position.y >= Bar.STEP_SIZE) {
+        const bar = bars[0]
+        const newBarPosition = { ...bar.position }
+        newBarPosition.y += Bar.STEP_SIZE
+        bar.position = newBarPosition
+      }
+    } else {
+      moveBarManually(bar, ball, controllers[0])
+    }
   }
 
   function moveBar1(bar, ball) {
@@ -256,7 +299,7 @@ function main() {
       }
       newBarPosition.y = Math.min(
         Math.max(0, newBarPosition.y),
-        canvas.height - bar.size.height
+        canvas.height - bar.size.height,
       )
       bar.position = newBarPosition
     }
@@ -272,7 +315,7 @@ function main() {
     }
     y = Math.min(
       Math.max(0, y),
-      canvas.height - bar.size.height
+      canvas.height - bar.size.height,
     )
     bar.position.y = y
   }
